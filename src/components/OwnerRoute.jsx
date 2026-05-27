@@ -25,12 +25,20 @@ const OwnerRoute = ({ children }) => {
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error fetching role:', error);
+          throw error;
+        }
 
         if (isMounted) {
-          setRole(data?.role || null);
+          if (data) {
+            setRole(data.role);
+          } else {
+            console.warn(`No profile found for user ID: ${user.id}. Check if profiles table is populated.`);
+            setRole(null);
+          }
         }
       } catch (err) {
         console.error('Error fetching user role from profiles:', err.message);
