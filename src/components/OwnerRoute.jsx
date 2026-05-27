@@ -10,16 +10,12 @@ const OwnerRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const fetchRole = async () => {
-      if (!user) {
-        if (isMounted) {
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -27,36 +23,17 @@ const OwnerRoute = ({ children }) => {
           .eq('id', user.id)
           .maybeSingle();
 
-        if (error) {
-          console.error('Supabase error fetching role:', error);
-          throw error;
-        }
-
-        if (isMounted) {
-          if (data) {
-            setRole(data.role);
-          } else {
-            console.warn(`No profile found for user ID: ${user.id}. Check if profiles table is populated.`);
-            setRole(null);
-          }
-        }
+        if (error) throw error;
+        setRole(data?.role || null);
       } catch (err) {
-        console.error('Error fetching user role from profiles:', err.message);
-        if (isMounted) {
-          setRole(null);
-        }
+        console.error('Error fetching role:', err.message);
+        setRole(null);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
     fetchRole();
-
-    return () => {
-      isMounted = false;
-    };
   }, [user]);
 
   if (loading) {
